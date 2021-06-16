@@ -12,3 +12,7 @@ uint8_t getScreenWidth();
 char* getTextScreen();
 void registerDirtyCallback(void (*ptr)());
 void setDirtyFlag();
+void registerDebugOutCallback(void (*ptr)(String s));
+void terminalDebugOut(String s);
+void clearScreen();
+void processCharacter(char c);

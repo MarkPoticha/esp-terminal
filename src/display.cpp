@@ -4,6 +4,8 @@
 #include "display.h"
 
 #define CURSOR '_'
+int16_t h = 135;
+int16_t w = 240;
 
 // TODO: tft-Objekt erst anlegen in doSetupDisplay()
 TFT_eSPI tft = TFT_eSPI();       // Invoke custom library
