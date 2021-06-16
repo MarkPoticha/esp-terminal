@@ -1,5 +1,5 @@
 
-
+void doSetupTerminal();
 void setCursorPos(uint8_t newCursorX, uint8_t newCursorY);
 void getCursorPos(uint8_t* currentCursorX, uint8_t* currentCursorY);
 uint8_t getCursorPosX();
@@ -14,5 +14,5 @@ void registerDirtyCallback(void (*ptr)());
 void setDirtyFlag();
 void registerDebugOutCallback(void (*ptr)(String s));
 void terminalDebugOut(String s);
-void clearScreen();
+//void clearScreen();
 void processCharacter(char c);

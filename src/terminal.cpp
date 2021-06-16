@@ -497,3 +497,11 @@ void processCharacter(char c) {
     terminalDebugOut(String(c));
   }
 }
+void doSetupTerminal()
+{
+  clearScreen();
+  printToScreen("Booting up T-Console.");
+  newLine(false);
+  newLine(false);
+}
+
