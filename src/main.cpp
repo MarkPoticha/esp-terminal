@@ -457,9 +457,11 @@ char* getTextScreen() {
 
 
 void setup() {
-  // put your setup code here, to run once:
+#ifdef USE_IR
   Serial.begin(9600, SERIAL_8N1, RX_PIN, TX_PIN);
-//  Serial.begin(115200);
+#else
+  Serial.begin(115200);
+#endif
   delay(20);
   Serial.println("Starting...");
   doSetupDisplay();
