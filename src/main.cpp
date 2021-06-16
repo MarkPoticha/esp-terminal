@@ -97,6 +97,7 @@ void clearScreen() {
     textscreen[i] = ' ';
   home();
   screen_dirty = true;
+  setDirtyFlag();
 }
 
 void scrollUpScreen() {
@@ -105,6 +106,7 @@ void scrollUpScreen() {
   for (int i = (TEXTSCREEN_HEIGHT - 1) * TEXTSCREEN_WIDTH; i < TEXTSCREEN_HEIGHT * TEXTSCREEN_WIDTH; i++)
     textscreen[i] = ' ';
   screen_dirty = true;
+  setDirtyFlag();
 }
 
 void scrollDownScreen() {
@@ -113,6 +115,7 @@ void scrollDownScreen() {
   for (int i = 0; i < TEXTSCREEN_WIDTH; i++)
     textscreen[i] = ' ';
   screen_dirty = true;
+  setDirtyFlag();
 }
 
 void newLine(bool skipCarriageReturn=false) {
@@ -157,6 +160,7 @@ void clearScreenFromTo(uint16_t startDelete, uint16_t endDelete) {
   for (int i = startDelete; i < endDelete; i++)
     textscreen[i] = ' ';
   screen_dirty = true; 
+  setDirtyFlag();
 }
 
 void clearScreenFromCursorToEndOfScreen() {
@@ -410,6 +414,7 @@ void printCharToScreen(char c) {
         textscreen[TEXTSCREEN_WIDTH - 1 + y_cursor*TEXTSCREEN_WIDTH] = ' ';
         escape_sequence = 0;
         screen_dirty = true;
+        setDirtyFlag();
         return; 
       }
     }
@@ -443,6 +448,7 @@ void printCharToScreen(char c) {
   moveCursor(x_cursor+1, y_cursor);
   if (x_cursor>=TEXTSCREEN_WIDTH) newLine();
   screen_dirty = true;
+  setDirtyFlag();
 }
 
 void printToScreen(String msg) {

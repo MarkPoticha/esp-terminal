@@ -12,6 +12,7 @@ long cursorTimer = 0;
 bool cursorBlink = false;
 uint8_t oldCursorX = 0;
 uint8_t oldCursorY = 0;
+bool displayScreenDirty = true;
 
 // temporary screen write - will be overwritten by next full refresh
 void writeCharTemp(uint8_t x, uint8_t y, String s) {
@@ -21,7 +22,9 @@ void writeCharTemp(uint8_t x, uint8_t y, String s) {
 
 void toggleCursor() {
   uint8_t x, y;
-  getCursorPos(&x, &y);
+//  getCursorPos(&x, &y);
+  x = getCursorPosX();
+  y = getCursorPosY();
   if (cursorBlink) {
     tft.setCursor(x*6, y*8);
     tft.print(CURSOR);
@@ -42,18 +45,24 @@ void showScreen(char* textScreen, bool screenDirty) {
     tft.setCursor(0,0);
     tft.print(String(textScreen));
     screenDirty = false;
+    displayScreenDirty = false;
   }
+}
+
+void setDisplayScreenDirty() {
+  displayScreenDirty = true;
 }
 
 void doSetupDisplay() {
   tft.init();
   tft.setRotation(3);
   tft.fillScreen(BLACK);
+  registerDirtyCallback(setDisplayScreenDirty);
 }
 
 void doLoopDisplay(char* textScreen, bool screenDirty) {
   if (millis() - updateTimer>=20) {
-    showScreen(textScreen, screenDirty);
+    showScreen(textScreen, displayScreenDirty);
     updateTimer = millis();
   }
   if (millis() - cursorTimer>=500) {
