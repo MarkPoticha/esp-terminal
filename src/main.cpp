@@ -25,7 +25,6 @@
 #define TEXTSCREEN_HEIGHT 17
 uint8_t x_cursor = 0;
 uint8_t y_cursor = 0;
-bool screen_dirty = true;
 uint8_t escape_sequence = 0;
 uint8_t escape_command = 0;
 uint8_t escape_subcommand = 0;
@@ -77,7 +76,6 @@ uint8_t getScreenWidth() {
 }
 
 void moveCursor(uint8_t newX, uint8_t newY) {
-  //showScreen(textscreen, screen_dirty, false, false);
   x_cursor = newX;
   y_cursor = newY;
   // TODO: bei Refactor in terminal.cpp hier entfernen und direkt korrekte Variablen setzen
@@ -96,7 +94,6 @@ void clearScreen() {
   for (int i = 0; i < TEXTSCREEN_HEIGHT * TEXTSCREEN_WIDTH; i++)
     textscreen[i] = ' ';
   home();
-  screen_dirty = true;
   setDirtyFlag();
 }
 
@@ -105,7 +102,6 @@ void scrollUpScreen() {
     textscreen[i] = textscreen[i+TEXTSCREEN_WIDTH];
   for (int i = (TEXTSCREEN_HEIGHT - 1) * TEXTSCREEN_WIDTH; i < TEXTSCREEN_HEIGHT * TEXTSCREEN_WIDTH; i++)
     textscreen[i] = ' ';
-  screen_dirty = true;
   setDirtyFlag();
 }
 
@@ -114,7 +110,6 @@ void scrollDownScreen() {
     textscreen[i] = textscreen[i-TEXTSCREEN_WIDTH];
   for (int i = 0; i < TEXTSCREEN_WIDTH; i++)
     textscreen[i] = ' ';
-  screen_dirty = true;
   setDirtyFlag();
 }
 
@@ -159,7 +154,6 @@ void cursorLeft() {
 void clearScreenFromTo(uint16_t startDelete, uint16_t endDelete) {
   for (int i = startDelete; i < endDelete; i++)
     textscreen[i] = ' ';
-  screen_dirty = true; 
   setDirtyFlag();
 }
 
@@ -413,7 +407,6 @@ void printCharToScreen(char c) {
           textscreen[i + y_cursor*TEXTSCREEN_WIDTH] = textscreen[i + y_cursor*TEXTSCREEN_WIDTH+1];
         textscreen[TEXTSCREEN_WIDTH - 1 + y_cursor*TEXTSCREEN_WIDTH] = ' ';
         escape_sequence = 0;
-        screen_dirty = true;
         setDirtyFlag();
         return; 
       }
@@ -447,7 +440,6 @@ void printCharToScreen(char c) {
   textscreen[address] = c;
   moveCursor(x_cursor+1, y_cursor);
   if (x_cursor>=TEXTSCREEN_WIDTH) newLine();
-  screen_dirty = true;
   setDirtyFlag();
 }
 
@@ -482,11 +474,6 @@ void setup() {
   printToScreen("IRMode: enabled");
   newLine();
 #endif
-
-//  if (millis() - updateTimer>=20) {
-//    showScreen(textscreen, screen_dirty, false, true);
-//    updateTimer = millis();
-//  } 
 
 }
 
@@ -540,7 +527,7 @@ void processCharacter(char c) {
 }
 
 void loop() {
-  doLoopDisplay(textscreen, screen_dirty);
+  doLoopDisplay(textscreen);
 #ifdef USE_IR
   if (irrecv.decode(&results)) {
     uint64_t v = results.value;

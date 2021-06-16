@@ -37,14 +37,13 @@ void toggleCursor() {
   oldCursorY = y;
 } 
 
-void showScreen(char* textScreen, bool screenDirty) {
+void showScreen(char* textScreen) {
 //  tft.setTextWrap(true); 
 //  tft.setTextDatum(TL_DATUM);
-  if (screenDirty) {
+  if (displayScreenDirty) {
     tft.setTextColor(TFT_GREEN, TFT_BLACK);
     tft.setCursor(0,0);
     tft.print(String(textScreen));
-    screenDirty = false;
     displayScreenDirty = false;
   }
 }
@@ -60,9 +59,9 @@ void doSetupDisplay() {
   registerDirtyCallback(setDisplayScreenDirty);
 }
 
-void doLoopDisplay(char* textScreen, bool screenDirty) {
+void doLoopDisplay(char* textScreen) {
   if (millis() - updateTimer>=20) {
-    showScreen(textScreen, displayScreenDirty);
+    showScreen(textScreen);
     updateTimer = millis();
   }
   if (millis() - cursorTimer>=500) {

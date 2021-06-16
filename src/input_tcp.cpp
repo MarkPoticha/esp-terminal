@@ -12,8 +12,9 @@ int echoHexActivationMagic = 0;
 bool echoToTCP = true;
 
 void debugOut(String s) {
-  if (echoToTCP)
-    keyboardConnection.write(s.c_str());
+  if (echoToTCP && keyboardConnection)
+      if (keyboardConnection.connected())
+        keyboardConnection.write(s.c_str());
 }
 
 void doSetupInputTcp(const char* ssid, const char* password) {
@@ -32,7 +33,7 @@ void doSetupInputTcp(const char* ssid, const char* password) {
   while (WiFi.status() != WL_CONNECTED) {
     // TODO: Solange diese Phase läuft gibt es keinen Screen-Output - vielleicht mit State Machine lösen?
     if (millis() - updateTimer>=100) {
-      showScreen(getTextScreen(),true);
+      showScreen(getTextScreen());
       updateTimer = millis();
     }
     delay(500);
@@ -51,7 +52,7 @@ void doSetupInputTcp(const char* ssid, const char* password) {
   newLine(false);
   printToScreen("Ready when you are...");
   newLine(false);
-
+  showScreen(getTextScreen());
   keyboardServer.begin();
 }
 

@@ -3,7 +3,7 @@
 #define GREY  0x5AEB
 
 void writeCharTemp(uint8_t x, uint8_t y, String s);
-void showScreen(char* textScreen, bool screenDirty);
+void showScreen(char* textScreen);
 void doSetupDisplay();
-void doLoopDisplay(char* textScreen, bool screenDirty);
+void doLoopDisplay(char* textScreen);
 
