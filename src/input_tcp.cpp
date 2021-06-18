@@ -33,7 +33,7 @@ void doSetupInputTcp(const char* ssid, const char* password) {
   while (WiFi.status() != WL_CONNECTED) {
     // TODO: Solange diese Phase läuft gibt es keinen Screen-Output - vielleicht mit State Machine lösen?
     if (millis() - updateTimer>=100) {
-      showScreen(getTextScreen());
+      showScreen();
       updateTimer = millis();
     }
     delay(500);
@@ -52,7 +52,7 @@ void doSetupInputTcp(const char* ssid, const char* password) {
   newLine(false);
   printToScreen("Ready when you are...");
   newLine(false);
-  showScreen(getTextScreen());
+  showScreen();
   keyboardServer.begin();
 }
 
