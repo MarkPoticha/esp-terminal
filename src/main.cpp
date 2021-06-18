@@ -16,7 +16,7 @@ void setup() {
 
 
 void loop() {
-  doLoopDisplay();
   doLoopInputTcp();
+  doLoopDisplay();
   doLoopSerial();
 }

@@ -5,7 +5,7 @@
 
 const uint16_t keyboardPort = 23;
 WiFiServer keyboardServer(keyboardPort);
-WiFiClient keyboardConnection = false;
+WiFiClient keyboardConnection;
 bool showKeyboardNote = true;
 int echoActivationMagic = 0;
 int echoHexActivationMagic = 0;
@@ -69,8 +69,13 @@ void doLoopInputTcp() {
           echoActivationMagic++;
           if (echoActivationMagic==4) {
             echoActivationMagic = 0;
-            echoToTCP = !echoToTCP;
-            debugOut(String("Echo Mode: ") + (echoToTCP ? "on\n\r" : "off\n\r"));
+            if (echoToTCP) {
+              debugOut("Echo Mode: off\n\r");
+              echoToTCP = !echoToTCP;
+            } else {
+              echoToTCP = !echoToTCP;
+              debugOut("Echo Mode: on\n\r"); // this after echoToTCP change because doesn't output if false
+            }
           }
         } else {
           echoActivationMagic = 0;
@@ -102,6 +107,8 @@ void doLoopInputTcp() {
         writeCharTemp(getScreenWidth()-1,0, String(c));
       }
 //      delay(1);
+    } else {
+
     }
   } else {
     keyboardConnection = keyboardServer.available();
