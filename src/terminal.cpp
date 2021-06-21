@@ -1,42 +1,25 @@
 #include <Arduino.h>
+#include "terminal_setup.h"
+#include "terminal_cursor.h"
 
-#define HEX_PACKET_COOLDOWN_MS 600  // ms till data package is thought of as closed if no data arrives 
 
 bool echoHexMode = true;
 uint8_t hexPosition = 0;
 long hexPacketCooldownTimer = 0;
 
-uint8_t cursorX = 0; 
-uint8_t cursorY = 0;
+
 void (*cbDirty)() = nullptr;
 void (*cbDebugOut)(String s) = nullptr;
 
-#define TEXTSCREEN_WIDTH 40
-#define TEXTSCREEN_HEIGHT 17
-uint8_t x_cursor = 0;
-uint8_t y_cursor = 0;
+
+//uint8_t x_cursor = 0;
+//uint8_t y_cursor = 0;
 uint8_t escape_sequence = 0;
 uint8_t escape_command = 0;
 uint8_t escape_subcommand = 0;
 String escape_string = "";
 
-void setCursorPos(uint8_t newCursorX, uint8_t newCursorY) {
-    cursorX = newCursorX;
-    cursorY = newCursorY;
-}
 
-void getCursorPos(uint8_t* currentCursorX, uint8_t* currentCursorY) {
-    currentCursorX = &cursorX;
-    currentCursorY = &cursorY;
-}
-
-uint8_t getCursorPosX() {
-    return cursorX;
-}
-
-uint8_t getCursorPosY() {
-    return cursorY;
-}
 
 void registerDirtyCallback(void (*ptr)()) {
     cbDirty = ptr;
@@ -71,20 +54,6 @@ uint8_t getScreenWidth() {
   return TEXTSCREEN_WIDTH;
 }
 
-void moveCursor(uint8_t newX, uint8_t newY) {
-  x_cursor = newX;
-  y_cursor = newY;
-  // TODO: bei Refactor in terminal.cpp hier entfernen und direkt korrekte Variablen setzen
-  setCursorPos(newX, newY);  
-}
-
-void home() {
-  moveCursor(0,0);
-}
-
-void moveCursorToCol(uint8_t newX) {
-  moveCursor(newX, y_cursor);
-}
 
 void clearScreen() {
   for (int i = 0; i < TEXTSCREEN_HEIGHT * TEXTSCREEN_WIDTH; i++)
@@ -110,40 +79,11 @@ void scrollDownScreen() {
 }
 
 void newLine(bool skipCarriageReturn=false) {
-//  Serial.println("Newline!");
-  if (!skipCarriageReturn) moveCursor(0, y_cursor);
-  moveCursor(x_cursor, y_cursor+1);
-  if (y_cursor>=TEXTSCREEN_HEIGHT) {
+  if (!skipCarriageReturn) moveCursorToCol(0);
+  if (getCursorPosY()+1>=TEXTSCREEN_HEIGHT) {
     scrollUpScreen();
-    moveCursor(x_cursor, y_cursor-1);
-  }
-}
-
-void cursorUp() {
-  if (y_cursor > 0) moveCursor(x_cursor, y_cursor - 1);
-}
-
-void cursorDown() {
-  if (y_cursor < (TEXTSCREEN_HEIGHT-1)) {
-    moveCursor(x_cursor, y_cursor + 1);
   } else {
-    newLine(true);
-  }
-}
-
-void cursorRight() {
-  if (x_cursor < TEXTSCREEN_WIDTH) {
-    moveCursor(x_cursor + 1, y_cursor);
-  } else {
-    newLine();
-  }
-}
-
-void cursorLeft() {
-  if (x_cursor > 0) {
-    moveCursor(x_cursor - 1, y_cursor);
-  } else {
-    if (y_cursor > 0) moveCursor(TEXTSCREEN_WIDTH-1, y_cursor - 1);
+      cursorDown();
   }
 }
 
@@ -154,23 +94,23 @@ void clearScreenFromTo(uint16_t startDelete, uint16_t endDelete) {
 }
 
 void clearScreenFromCursorToEndOfScreen() {
-  clearScreenFromTo(x_cursor + y_cursor * TEXTSCREEN_WIDTH, TEXTSCREEN_WIDTH * TEXTSCREEN_HEIGHT);
+  clearScreenFromTo(getCursorPosX() + getCursorPosY() * TEXTSCREEN_WIDTH, TEXTSCREEN_WIDTH * TEXTSCREEN_HEIGHT);
 }
 
 void clearScreenFromCursorToStartOfScreen() {
-  clearScreenFromTo(0, x_cursor + y_cursor * TEXTSCREEN_WIDTH);
+  clearScreenFromTo(0, getCursorPosX() + getCursorPosY() * TEXTSCREEN_WIDTH);
 }
 
 void clearLineFromCursorToEndOfLine() {
-  clearScreenFromTo(x_cursor + y_cursor * TEXTSCREEN_WIDTH, y_cursor * TEXTSCREEN_WIDTH + TEXTSCREEN_WIDTH);    
+  clearScreenFromTo(getCursorPosX() + getCursorPosY() * TEXTSCREEN_WIDTH, getCursorPosY() * TEXTSCREEN_WIDTH + TEXTSCREEN_WIDTH);    
 }
 
 void clearLineFromCursorToStartOfLine() {
-  clearScreenFromTo(y_cursor * TEXTSCREEN_WIDTH, x_cursor + y_cursor * TEXTSCREEN_WIDTH);    
+  clearScreenFromTo(getCursorPosY() * TEXTSCREEN_WIDTH, getCursorPosX() + getCursorPosY() * TEXTSCREEN_WIDTH);    
 }
 
 void clearLine() {
-  clearScreenFromTo(y_cursor * TEXTSCREEN_WIDTH, y_cursor * TEXTSCREEN_WIDTH + TEXTSCREEN_WIDTH);    
+  clearScreenFromTo(getCursorPosY() * TEXTSCREEN_WIDTH, getCursorPosY() * TEXTSCREEN_WIDTH + TEXTSCREEN_WIDTH);    
 }
 
 void interpretAnsiCode(String escape_string) {
@@ -194,8 +134,7 @@ void interpretAnsiCode(String escape_string) {
     } else if ((byte)(escape_string.charAt(pos)) > 0x40) {
       if (escape_string.charAt(pos) == 'A') { // Cursor up
         if (a[0]==0) a[0]=1;
-        for (int i = 0; i<a[0]; i++)
-          cursorUp();
+        cursorUp(a[0]);
       }
       if (escape_string.charAt(pos) == 'B') { // Cursor down
         if (a[0]==0) a[0]=1;
@@ -219,13 +158,13 @@ void interpretAnsiCode(String escape_string) {
       }
       if (escape_string.charAt(pos) == 'F') { // Cursor previous line
         if (a[0]==0) a[0]=1;
-        moveCursor(0, y_cursor);
+        moveCursorToCol(0);
         for (int i = 0; i<a[0]; i++)
           cursorUp();
       }
       if (escape_string.charAt(pos) == 'G') { // Cursor horizontal absolute
         if (a[0]==0) a[0]=1;
-        moveCursor(a[0]-1, y_cursor);
+        moveCursorToCol(a[0]-1);
       }
       if ((escape_string.charAt(pos) == 'H')||(escape_string.charAt(pos) == 'f')) { // Cursor position
         if (a[0]==0) a[0]=1;
@@ -256,13 +195,13 @@ void interpretAnsiCode(String escape_string) {
       }
       if (escape_string.charAt(pos) == 'S') { // Scroll up
         if (a[0]==0) a[0]=1;
-        moveCursor(x_cursor, y_cursor);
+        // moveCursor(x_cursor, y_cursor);
         for (int i = 0; i<a[0]; i++)
           scrollUpScreen();
       }
       if (escape_string.charAt(pos) == 'T') { // Scroll down
         if (a[0]==0) a[0]=1;
-        moveCursor(x_cursor, y_cursor);
+        // moveCursor(x_cursor, y_cursor);
         for (int i = 0; i<a[0]; i++)
           scrollDownScreen();
       }
@@ -274,7 +213,7 @@ void interpretAnsiCode(String escape_string) {
 void printCharToScreen(char c) {
 //  Serial.print("-");
 
-  uint16_t address = x_cursor + TEXTSCREEN_WIDTH * y_cursor;
+  uint16_t address = getCursorPosX() + TEXTSCREEN_WIDTH * getCursorPosY();
 //  Serial.printf("printChar to x:%i, y:%i, addr:%i, char:%i\n", x_cursor, y_cursor, address, c);
   if (escape_sequence == 1) {
     escape_command = (byte)c;
@@ -312,7 +251,7 @@ void printCharToScreen(char c) {
       return;
     }
     if (escape_command == 'I') { // cursor up and insert
-      if (y_cursor == 0) {
+      if (getCursorPosY() == 0) {
         scrollDownScreen();
       } else {
         cursorUp();
@@ -398,10 +337,10 @@ void printCharToScreen(char c) {
     terminalDebugOut(" 3rd byte:" + String((byte)c) +"\r\n");
     if ((escape_command == 91) && (escape_subcommand == 51)) {
       if ((byte)c == 126) { // delete
-        moveCursor(x_cursor, y_cursor); // clean cursor
-        for (uint8_t i = x_cursor; i < TEXTSCREEN_WIDTH - 1; i++)
-          textscreen[i + y_cursor*TEXTSCREEN_WIDTH] = textscreen[i + y_cursor*TEXTSCREEN_WIDTH+1];
-        textscreen[TEXTSCREEN_WIDTH - 1 + y_cursor*TEXTSCREEN_WIDTH] = ' ';
+        // moveCursor(x_cursor, y_cursor); // clean cursor
+        for (uint8_t i = getCursorPosX(); i < TEXTSCREEN_WIDTH - 1; i++)
+          textscreen[i + getCursorPosY()*TEXTSCREEN_WIDTH] = textscreen[i + getCursorPosY()*TEXTSCREEN_WIDTH+1];
+        textscreen[TEXTSCREEN_WIDTH - 1 + getCursorPosY()*TEXTSCREEN_WIDTH] = ' ';
         escape_sequence = 0;
         setDirtyFlag();
         return; 
@@ -425,7 +364,7 @@ void printCharToScreen(char c) {
     return;
   }
   if ((byte)c == 13) {
-    moveCursor(0, y_cursor);
+    moveCursorToCol(0);
     return;
   }
   if ((byte)c == 10) {
@@ -434,8 +373,9 @@ void printCharToScreen(char c) {
   }
   if ((byte)c < 32) {c = '_';} // handle unprintable unhandled chars
   textscreen[address] = c;
-  moveCursor(x_cursor+1, y_cursor);
-  if (x_cursor>=TEXTSCREEN_WIDTH) newLine();
+  //moveCursor(x_cursor+1, y_cursor);
+  cursorRight();
+  //if (x_cursor>=TEXTSCREEN_WIDTH) newLine();
   setDirtyFlag();
 }
 
@@ -497,6 +437,7 @@ void processCharacter(char c) {
     terminalDebugOut(String(c));
   }
 }
+
 void doSetupTerminal()
 {
   clearScreen();
